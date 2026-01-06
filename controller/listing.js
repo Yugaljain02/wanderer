@@ -103,17 +103,31 @@ module.exports.renderEditForm = (async(req,res)=>{
 //put
 module.exports.updateListing = async (req, res) => {
   const { id } = req.params;
-  const { location } = req.body.listing;
+  const newLocation = req.body.listing.location;
 
   let listing = await Listing.findById(id);
+  if (!listing) {
+    req.flash("error", "Listing not found");
+    return res.redirect("/listings");
+  }
 
-  // 🌍 Re-geocode ONLY if location was changed
-  if (location && location !== listing.location) {
+  const oldLocation = listing.location; // ✅ save old value
+
+  // 📝 update normal fields
+  listing.title = req.body.listing.title;
+  listing.description = req.body.listing.description;
+  listing.price = req.body.listing.price;
+  listing.country = req.body.listing.country;
+  listing.category = req.body.listing.category;
+  listing.location = newLocation;
+
+  // 🌍 re-geocode ONLY if location changed
+  if (newLocation && newLocation !== oldLocation) {
     const geoResponse = await axios.get(
       "https://nominatim.openstreetmap.org/search",
       {
         params: {
-          q: location,
+          q: newLocation,
           format: "json",
           limit: 1,
         },
@@ -123,26 +137,22 @@ module.exports.updateListing = async (req, res) => {
       }
     );
 
-    if (geoResponse.data.length > 0) {
-      const lat = geoResponse.data[0].lat;
-      const lng = geoResponse.data[0].lon;
-
-      listing.geometry = {
-        type: "Point",
-        coordinates: [lng, lat],
-      };
+    if (geoResponse.data.length === 0) {
+      req.flash("error", "Invalid location");
+      return res.redirect(`/listings/${id}/edit`);
     }
+
+    const lat = parseFloat(geoResponse.data[0].lat);
+    const lng = parseFloat(geoResponse.data[0].lon);
+
+    // ✅ REQUIRED GeoJSON
+    listing.geometry = {
+      type: "Point",
+      coordinates: [lng, lat],
+    };
   }
 
-  // update other fields
-  listing.title = req.body.listing.title;
-  listing.description = req.body.listing.description;
-  listing.price = req.body.listing.price;
-  listing.location = location;
-  listing.country = req.body.listing.country;
-  listing.category = req.body.listing.category;
-
-  // update image if new file uploaded
+  // 🖼️ update image if new uploaded
   if (req.file) {
     listing.image = {
       url: req.file.path,
@@ -155,6 +165,7 @@ module.exports.updateListing = async (req, res) => {
   req.flash("success", "Listing Updated!");
   res.redirect(`/listings/${id}`);
 };
+
 
 module.exports.destroyListing = async(req,res)=>{
     let {id} = req.params;
