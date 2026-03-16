@@ -45,15 +45,18 @@ module.exports.createlisting = async (req, res) => {
 
   // 🌍 FREE geocoding using OpenStreetMap (Nominatim)
   const geoResponse = await axios.get(
-    "https://nominatim.openstreetmap.org/search",
-    {
-      params: {
-        q: location,
-        format: "json",
-        limit: 1,
-      },
-    }
-  );
+  "https://nominatim.openstreetmap.org/search",
+  {
+    params: {
+      q: location,
+      format: "json",
+      limit: 1,
+    },
+    headers: {
+      "User-Agent": "WanderlustApp/1.0 (learning project)",
+    },
+  }
+);
 
   if (geoResponse.data.length === 0) {
     req.flash("error", "Location not found");

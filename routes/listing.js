@@ -20,7 +20,7 @@ const upload = multer({storage});
   .post(
     isLoggedIn,
    // isvalidateListing,
-     upload.single('Listing[image]'),
+     upload.single('listing[image]'),
     wrapAsync(listingcontroller.createlisting)
   );
 
