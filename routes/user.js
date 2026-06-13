@@ -12,7 +12,7 @@ const userController = require("../controller/user.js");
 .post( wrapAsync(userController.signup));
 
 // loginForm, login
-router.route("/signs")
+router.route("/logins")
 .get( (userController.loginForm))
 .post( savedRedirectUrl,
     passport.authenticate("local",{
