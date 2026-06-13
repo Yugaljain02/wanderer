@@ -13,7 +13,7 @@ const userController = require("../controller/user.js");
 
 // loginForm, login
 
-router.route("/sign")
+router.route("/login")
 
 .get( (userController.loginForm))
 .post( savedRedirectUrl,
